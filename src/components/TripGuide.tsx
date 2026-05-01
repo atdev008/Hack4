@@ -89,29 +89,28 @@ export default function TripGuide() {
 
   useEffect(() => {
     if (!visible || !steps[current]) return;
+    // Reset rect immediately when step changes
+    setRect(null);
     let attempts = 0;
+    let timer: ReturnType<typeof setTimeout>;
     const tryFind = () => {
       const el = document.getElementById(steps[current].targetId);
       if (el) {
         const r = el.getBoundingClientRect();
-        // Skip elements that are not visible (height 0)
-        if (r.height > 0) {
-          setRect(r);
+        if (r.height > 0 && r.width > 0) {
           el.scrollIntoView({ behavior: "smooth", block: "center" });
-          // Re-measure after scroll settles
-          setTimeout(() => {
+          // Wait for scroll to finish then measure
+          timer = setTimeout(() => {
             const r2 = el.getBoundingClientRect();
             if (r2.height > 0) setRect(r2);
-          }, 500);
+          }, 600);
           return;
         }
       }
-      // Retry up to 5 times
       attempts++;
-      if (attempts < 5) setTimeout(tryFind, 600);
-      else setRect(null);
+      if (attempts < 8) timer = setTimeout(tryFind, 500);
     };
-    const timer = setTimeout(tryFind, 300);
+    timer = setTimeout(tryFind, 200);
     return () => clearTimeout(timer);
   }, [visible, current]);
 
