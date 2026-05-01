@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users ───
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  passwordHash  String?
+  avatar        String?
+  provider      String   @default("email")
+  qrCode        String?  @unique
+  lat           Float?
+  lng           Float?
+  lastSeen      DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  trips         Trip[]
+  badges        UserBadge[]
+  sentRequests  FriendRequest[] @relation("SentRequests")
+  receivedRequests FriendRequest[] @relation("ReceivedRequests")
+  friendsA      Friendship[] @relation("FriendA")
+  friendsB      Friendship[] @relation("FriendB")
+}
+
+// ─── Trips ───
+model Trip {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  shortDescription String?
+  mood            String
+  province        String
+  budget          Int?
+  durationHours   Int?
+  transportMode   String?
+  estimatedBudget Int?
+  tirednessLevel  String?
+  badgeReward     String?
+  badgeEmoji      String?
+  travelMemory    String?
+  status          String   @default("active")
+  tripData        Json
+  missionsData    Json
+  createdAt       DateTime @default(now())
+  completedAt     DateTime?
+
+  badges          UserBadge[]
+}
+
+// ─── Badges ───
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tripId    String?
+  trip      Trip?    @relation(fields: [tripId], references: [id], onDelete: SetNull)
+  name      String
+  emoji     String?
+  earnedAt  DateTime @default(now())
+
+  @@unique([userId, name])
+}
+
+// ─── Friendships ───
+model Friendship {
+  id        String   @id @default(cuid())
+  userAId   String
+  userA     User     @relation("FriendA", fields: [userAId], references: [id], onDelete: Cascade)
+  userBId   String
+  userB     User     @relation("FriendB", fields: [userBId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userAId, userBId])
+}
+
+// ─── Friend Requests ───
+model FriendRequest {
+  id         String   @id @default(cuid())
+  fromUserId String
+  fromUser   User     @relation("SentRequests", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUserId   String
+  toUser     User     @relation("ReceivedRequests", fields: [toUserId], references: [id], onDelete: Cascade)
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+
+  @@unique([fromUserId, toUserId])
+}
