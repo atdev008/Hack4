@@ -27,8 +27,8 @@ export async function GET(request: NextRequest) {
     ]);
 
     const friends = [
-      ...friendsA.map((f) => f.userB),
-      ...friendsB.map((f) => f.userA),
+      ...friendsA.map((f: typeof friendsA[number]) => f.userB),
+      ...friendsB.map((f: typeof friendsB[number]) => f.userA),
     ];
 
     return NextResponse.json({ friends, pendingReceived, pendingSent });
