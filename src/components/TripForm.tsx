@@ -33,12 +33,12 @@ export default function TripForm({
   return (
     <div className="space-y-4">
       {/* Area */}
-      <div className="app-card p-4 animate-fade-in-up delay-1">
+      <div id="area-section" className="app-card p-4 animate-fade-in-up delay-1">
         <AreaSelector value={area} onChange={onAreaChange} geoLat={geoLat} geoLng={geoLng} onRequestGps={onRequestGps} />
       </div>
 
       {/* Duration */}
-      <div className="app-card p-4 animate-fade-in-up delay-2">
+      <div id="duration-slider" className="app-card p-4 animate-fade-in-up delay-2">
         <label className="flex items-center justify-between mb-3">
           <span className="flex items-center gap-2 text-sm font-semibold">
             <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#F59E0B10" }}>
@@ -59,7 +59,7 @@ export default function TripForm({
       </div>
 
       {/* Budget */}
-      <div className="app-card p-4 animate-fade-in-up delay-3">
+      <div id="budget-slider" className="app-card p-4 animate-fade-in-up delay-3">
         <label className="flex items-center justify-between mb-3">
           <span className="flex items-center gap-2 text-sm font-semibold">
             <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#10B98110" }}>
@@ -80,7 +80,7 @@ export default function TripForm({
       </div>
 
       {/* Places Count */}
-      <div className="app-card p-4 animate-fade-in-up delay-4">
+      <div id="places-count-section" className="app-card p-4 animate-fade-in-up delay-4">
         <label className="flex items-center gap-2 text-sm font-semibold mb-3">
           <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#EC489910" }}>
             <Hash size={15} strokeWidth={1.8} style={{ color: "#EC4899" }} />
@@ -98,7 +98,7 @@ export default function TripForm({
       </div>
 
       {/* Transport */}
-      <div className="app-card p-4 animate-fade-in-up delay-5">
+      <div id="transport-section" className="app-card p-4 animate-fade-in-up delay-5">
         <label className="flex items-center gap-2 text-sm font-semibold mb-3">
           <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#8B5CF610" }}>
             <Rocket size={15} strokeWidth={1.8} style={{ color: "#8B5CF6" }} />

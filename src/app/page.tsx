@@ -16,6 +16,7 @@ import ActivityBanner from "@/components/ActivityBanner";
 import AchievementShowcase from "@/components/AchievementShowcase";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import LocationPermission from "@/components/LocationPermission";
+import AppGuide from "@/components/AppGuide";
 import BottomNav, { type Tab } from "@/components/BottomNav";
 import { useSavedTrips } from "@/hooks/useSavedTrips";
 import TripsPage from "@/components/TripsPage";
@@ -28,7 +29,17 @@ import { useAuth } from "@/hooks/useAuth";
 
 type Step = "mood" | "details" | "loading" | "result";
 
-async function enrichWithGooglePlaces(items: RouteItem[], province: string): Promise<RouteItem[]> {
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.asin(Math.sqrt(a));
+}
+
+async function enrichWithGooglePlaces(
+  items: RouteItem[], province: string, centerLat?: number, centerLng?: number, radiusKm?: number
+): Promise<RouteItem[]> {
   const results: RouteItem[] = [...items];
   
   // Fetch place data in parallel
@@ -53,10 +64,23 @@ async function enrichWithGooglePlaces(items: RouteItem[], province: string): Pro
     })
   );
 
+  // Filter out places beyond radius (if center coordinates provided)
+  let filtered = enriched;
+  if (centerLat && centerLng && radiusKm) {
+    const tolerance = radiusKm <= 5 ? 1.0 : 1.2; // strict for small radius
+    filtered = enriched.filter((item) => {
+      if (!item.place_lat || !item.place_lng) return true;
+      const dist = haversineKm(centerLat, centerLng, item.place_lat, item.place_lng);
+      return dist <= radiusKm * tolerance;
+    });
+    // Keep at least 2 items
+    if (filtered.length < 2) filtered = enriched.slice(0, Math.min(3, enriched.length));
+  }
+
   // Calculate distances sequentially
-  for (let i = 1; i < enriched.length; i++) {
-    const prev = enriched[i - 1];
-    const curr = enriched[i];
+  for (let i = 1; i < filtered.length; i++) {
+    const prev = filtered[i - 1];
+    const curr = filtered[i];
     if (prev.place_lat && prev.place_lng && curr.place_lat && curr.place_lng) {
       try {
         const res = await fetch(
@@ -65,14 +89,14 @@ async function enrichWithGooglePlaces(items: RouteItem[], province: string): Pro
         if (res.ok) {
           const dist = await res.json();
           if (!dist.error) {
-            enriched[i] = { ...enriched[i], distance_text: dist.distance, duration_text: dist.duration };
+            filtered[i] = { ...filtered[i], distance_text: dist.distance, duration_text: dist.duration };
           }
         }
       } catch { /* ignore distance errors */ }
     }
   }
   
-  return enriched;
+  return filtered;
 }
 
 export default function Home() {
@@ -121,21 +145,46 @@ export default function Home() {
     fetchLocationWeather();
   }, [geoLocation, locale]);
 
+  // Track area changes with stable key
+  const areaKey = `${area.mode}|${area.label}|${area.lat}|${area.lng}|${area.radius}`;
+
   useEffect(() => {
     if (locationWeather && step === "mood") return;
+
+    const isRealProvince = area.mode === "province" || area.mode === "district";
+    const weatherProvince = isRealProvince
+      ? area.label.split(" - ")[0]
+      : "กรุงเทพ";
+
     const fetchByProvince = async () => {
       setWeatherLoading(true);
       try {
+        if (area.lat && area.lng && !isRealProvince) {
+          const res = await fetch(`/api/weather-location?lat=${area.lat}&lng=${area.lng}&locale=${locale}`);
+          if (res.ok) {
+            const data = await res.json();
+            setLocationWeather(data);
+            setWeather({
+              province: data.locationName,
+              today: { date: new Date().toLocaleDateString(), maxTemp: data.maxTemp, minTemp: data.minTemp, rainPercent: data.rainPercent, descTh: data.descTh, descEn: data.descEn },
+              forecasts: [],
+            });
+            setAqi({ aqi: data.aqi, level: data.aqiLevel, levelTh: data.aqiLevelTh, color: data.aqiColor, advice: data.aqiAdvice, adviceTh: data.aqiAdviceTh });
+            setWeatherLoading(false);
+            return;
+          }
+        }
         const [weatherRes, aqiRes] = await Promise.allSettled([
-          fetch(`/api/weather?province=${encodeURIComponent(area.label)}`),
-          fetch(`/api/aqi?province=${encodeURIComponent(area.label)}`),
+          fetch(`/api/weather?province=${encodeURIComponent(weatherProvince)}`),
+          fetch(`/api/aqi?province=${encodeURIComponent(weatherProvince)}`),
         ]);
         if (weatherRes.status === "fulfilled" && weatherRes.value.ok) setWeather(await weatherRes.value.json());
         if (aqiRes.status === "fulfilled" && aqiRes.value.ok) setAqi(await aqiRes.value.json());
       } catch { /* non-critical */ } finally { setWeatherLoading(false); }
     };
     fetchByProvince();
-  }, [area.label, step, locationWeather]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [areaKey, step]);
 
   const selectedMoodData = moods.find((m) => m.id === selectedMood);
   const selectedMoodLabel = selectedMood ? moodT[selectedMood as keyof typeof moodT]?.label ?? selectedMoodData?.label : "";
@@ -170,7 +219,7 @@ export default function Home() {
       const data: TripResultType = await res.json();
       if (data && data.route_items) {
         // Enrich with Google Places data (photos, coords, distances)
-        const enrichedItems = await enrichWithGooglePlaces(data.route_items, area.label);
+        const enrichedItems = await enrichWithGooglePlaces(data.route_items, area.label, area.lat, area.lng, area.radius);
         const enrichedData = { ...data, route_items: enrichedItems };
         setTripResult(enrichedData);
         setMissions(enrichedData.route_items.map((_, i) => ({ index: i, completed: false })));
@@ -298,6 +347,7 @@ export default function Home() {
     if (step === "result" && !viewingSaved) {
       return (
         <button
+          id="save-trip-btn"
           onClick={handleSaveTrip}
           className="w-full py-4 rounded-2xl flex items-center justify-center gap-2 text-white text-[15px] font-semibold transition-all duration-300 active:scale-[0.98]"
           style={{
@@ -539,6 +589,16 @@ export default function Home() {
           onAllow={() => { setShowGpsPopup(false); requestPermission(); }}
           onDeny={() => { setShowGpsPopup(false); denyPermission(); }}
           blocked={geoError === "blocked"}
+        />
+      )}
+
+      {/* App Guide — mood & trip setup walkthrough (show after location permission is handled) */}
+      {!needsPermission && !showGpsPopup && (step === "mood" || step === "details") && activeTab === "home" && (
+        <AppGuide
+          step={step}
+          onSelectMood={(id) => setSelectedMood(id)}
+          onGoToDetails={() => setStep("details")}
+          onSelectProvince={() => {}}
         />
       )}
     </div>

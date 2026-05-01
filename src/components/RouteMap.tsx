@@ -65,7 +65,7 @@ export default function RouteMap({ items, transport }: RouteMapProps) {
   const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypoints ? `&waypoints=${waypoints}` : ""}&travelmode=walking`;
 
   return (
-    <div className="app-card overflow-hidden animate-fade-in-up delay-2">
+    <div id="trip-route-map" className="app-card overflow-hidden animate-fade-in-up delay-2">
       {/* Header */}
       <div className="px-4 pt-4 pb-2 flex items-center justify-between">
         <h3 className="text-sm font-bold">{isEn ? "Route Map" : "แผนที่เส้นทาง"}</h3>

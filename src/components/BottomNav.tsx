@@ -50,7 +50,7 @@ export default function BottomNav({
         {/* Expanded mode: full-width CTA */}
         {expanded && showCenter ? (
           <div className="py-3 animate-fade-in">
-            <div className="flex items-center gap-3">
+            <div id="bottom-nav-center" className="flex items-center gap-3">
               {/* Center action as full-width pill */}
               <div className="flex-1">{centerButton}</div>
             </div>
@@ -69,7 +69,7 @@ export default function BottomNav({
             ))}
 
             {/* Center FAB */}
-            <div className="flex flex-col items-center px-1" style={{ marginTop: "-28px" }}>
+            <div id="bottom-nav-center" className="flex flex-col items-center px-1" style={{ marginTop: "-28px" }}>
               {showCenter ? (
                 <div className="relative">
                   <div

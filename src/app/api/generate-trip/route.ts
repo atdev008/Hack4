@@ -62,14 +62,22 @@ export async function POST(request: NextRequest) {
     const { mood, province, duration_hours, budget, transport_mode, locale = "th", user_context, weather_info, places_count, radius_km, area_lat, area_lng } = body;
 
     const isEn = locale === "en";
-    const locationContext = area_lat && area_lng
+    const hasCoords = area_lat && area_lng;
+    const radiusVal = radius_km || 10;
+    
+    // Reverse geocode approximate area name for AI context
+    const areaDesc = hasCoords
+      ? `GPS (${area_lat}, ${area_lng}) in ${province}`
+      : province;
+    
+    const locationContext = hasCoords
       ? isEn
-        ? `\nUser's location: ${area_lat}, ${area_lng}. All places MUST be within ${radius_km || 10}km radius of this point.`
-        : `\nตำแหน่งผู้ใช้: ${area_lat}, ${area_lng} สถานที่ทั้งหมดต้องอยู่ในรัศมี ${radius_km || 10} กม. จากจุดนี้`
+        ? `\n\n=== MANDATORY LOCATION RULE (DO NOT IGNORE) ===\nUser is at GPS (${area_lat}, ${area_lng}) near ${province}.\nMAX RADIUS: ${radiusVal}km from this exact point.\nEVERY place MUST be within ${radiusVal}km. If radius is 2km, only suggest places within 2km walking distance.\nDo NOT suggest places in other cities or districts far away.\nFor ${radiusVal}km radius, suggest places in the SAME neighborhood/district only.\n=== END LOCATION RULE ===`
+        : `\n\n=== กฎตำแหน่งบังคับ (ห้ามละเลย) ===\nผู้ใช้อยู่ที่พิกัด (${area_lat}, ${area_lng}) ใกล้${province}\nรัศมีสูงสุด: ${radiusVal} กม. จากจุดนี้เท่านั้น\nสถานที่ทุกแห่งต้องอยู่ภายใน ${radiusVal} กม. ถ้ารัศมี 2 กม. ให้แนะนำเฉพาะสถานที่ในย่านเดียวกัน\nห้ามแนะนำสถานที่ในเมืองอื่นหรือเขตที่ไกลออกไป\nสำหรับรัศมี ${radiusVal} กม. ให้เลือกสถานที่ในละแวกใกล้เคียงเท่านั้น\n=== จบกฎตำแหน่ง ===`
       : radius_km
       ? isEn
-        ? `\nAll places must be within ${radius_km}km of ${province} center.`
-        : `\nสถานที่ทั้งหมดต้องอยู่ในรัศมี ${radius_km} กม. จากใจกลาง${province}`
+        ? `\n\n=== MANDATORY LOCATION RULE ===\nAll places MUST be within ${radiusVal}km of central ${province}. Do NOT suggest places outside this radius. For small radius like 2-5km, only suggest places in the city center area.\n=== END RULE ===`
+        : `\n\n=== กฎตำแหน่งบังคับ ===\nสถานที่ทั้งหมดต้องอยู่ในรัศมี ${radiusVal} กม. จากใจกลาง${province} ห้ามแนะนำสถานที่นอกรัศมีนี้ สำหรับรัศมีเล็กเช่น 2-5 กม. ให้เลือกเฉพาะสถานที่ในเขตเมืองเท่านั้น\n=== จบกฎ ===`
       : "";
     const contextBlock = user_context
       ? isEn

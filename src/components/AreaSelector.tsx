@@ -49,13 +49,37 @@ export default function AreaSelector({ value, onChange, geoLat, geoLng, onReques
     }
   }, [geoLat, geoLng, isEn, onChange, value.radius]);
 
-  const handleProvinceSelect = useCallback((p: string) => {
+  const handleProvinceSelect = useCallback(async (p: string) => {
     setSelectedProvince(p);
+    // Try to get coordinates for this province
+    try {
+      const res = await fetch(`/api/places?action=search&q=${encodeURIComponent(p + " Thailand")}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.lat && data.lng) {
+          onChange({ label: p, lat: data.lat, lng: data.lng, radius: value.radius, mode: "province" });
+          return;
+        }
+      }
+    } catch { /* fallback without coords */ }
     onChange({ label: p, radius: value.radius, mode: "province" });
   }, [onChange, value.radius]);
 
-  const handleDistrictSelect = useCallback((d: string) => {
-    onChange({ label: `${selectedProvince} - ${d}`, radius: value.radius, mode: "district" });
+  const handleDistrictSelect = useCallback(async (d: string) => {
+    const label = `${selectedProvince} - ${d}`;
+    // Try to get coordinates for this district
+    try {
+      const q = `${d} ${selectedProvince} Thailand`;
+      const res = await fetch(`/api/places?action=search&q=${encodeURIComponent(q)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.lat && data.lng) {
+          onChange({ label, lat: data.lat, lng: data.lng, radius: value.radius, mode: "district" });
+          return;
+        }
+      }
+    } catch { /* fallback without coords */ }
+    onChange({ label, radius: value.radius, mode: "district" });
   }, [onChange, selectedProvince, value.radius]);
 
   const handleRadiusChange = useCallback((r: number) => {
@@ -94,7 +118,7 @@ export default function AreaSelector({ value, onChange, geoLat, geoLng, onReques
           const Icon = m.icon;
           const active = mode === m.id;
           return (
-            <button key={m.id} onClick={() => handleModeChange(m.id)}
+            <button key={m.id} id={`area-${m.id}-tab`} onClick={() => handleModeChange(m.id)}
               className="pill-btn gap-1.5 flex-shrink-0 text-[12px]"
               style={{
                 background: active ? "var(--color-primary)" : "var(--color-surface-3)",
@@ -212,7 +236,7 @@ export default function AreaSelector({ value, onChange, geoLat, geoLng, onReques
       )}
 
       {/* Radius slider */}
-      <div className="pt-1">
+      <div id="area-radius-slider" className="pt-1">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[13px] font-semibold">{t.radiusLabel as string}</span>
           <span className="text-[15px] font-bold" style={{ color: "var(--color-primary)" }}>

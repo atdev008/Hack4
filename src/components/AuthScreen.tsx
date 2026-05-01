@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useI18n } from "@/i18n/context";
 import { Map, Mail, Lock, User, Eye, EyeOff, ArrowRight, AlertCircle } from "lucide-react";
 import LanguageToggle from "./LanguageToggle";
+import OnboardingGuide from "./OnboardingGuide";
 
 interface AuthScreenProps {
   onLoginEmail: (email: string, password: string) => void;
@@ -32,6 +33,8 @@ export default function AuthScreen({ onLoginEmail, onSignupEmail, onLoginProvide
 
   return (
     <div className="min-h-dvh flex flex-col bg-white">
+      {/* Onboarding Guide */}
+      <OnboardingGuide onSwitchToSignup={() => setMode("signup")} mode={mode} />
       {/* Top section with gradient */}
       <div
         className="relative px-6 pt-14 pb-10"
@@ -133,6 +136,7 @@ export default function AuthScreen({ onLoginEmail, onSignupEmail, onLoginProvide
             <div className="relative animate-fade-in">
               <User size={18} strokeWidth={1.8} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "var(--color-text-tertiary)" }} />
               <input
+                id="auth-name-input"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -147,6 +151,7 @@ export default function AuthScreen({ onLoginEmail, onSignupEmail, onLoginProvide
           <div className="relative">
             <Mail size={18} strokeWidth={1.8} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "var(--color-text-tertiary)" }} />
             <input
+              id="auth-email-input"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -160,6 +165,7 @@ export default function AuthScreen({ onLoginEmail, onSignupEmail, onLoginProvide
           <div className="relative">
             <Lock size={18} strokeWidth={1.8} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "var(--color-text-tertiary)" }} />
             <input
+              id="auth-password-input"
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -181,6 +187,7 @@ export default function AuthScreen({ onLoginEmail, onSignupEmail, onLoginProvide
           </div>
 
           <button
+            id="auth-submit-btn"
             type="submit"
             className="w-full py-4 rounded-2xl text-[15px] font-semibold text-white transition-all active:scale-[0.98]"
             style={{
@@ -202,6 +209,7 @@ export default function AuthScreen({ onLoginEmail, onSignupEmail, onLoginProvide
               : (isEn ? "Already have an account? " : "มีบัญชีอยู่แล้ว? ")}
           </span>
           <button
+            id="auth-signup-link"
             onClick={() => setMode(mode === "login" ? "signup" : "login")}
             className="text-[13px] font-semibold"
             style={{ color: "var(--color-primary)" }}

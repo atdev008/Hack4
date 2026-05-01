@@ -26,6 +26,7 @@ export default function MoodSelector({
         return (
           <button
             key={mood.id}
+            id={`mood-${mood.id}`}
             onClick={() => onSelect(mood.id)}
             className={`animate-fade-in-up delay-${i + 1}`}
             aria-pressed={isSelected}

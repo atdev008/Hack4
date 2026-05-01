@@ -7,6 +7,7 @@ import { Wallet, Zap, MapPin, Target, CheckCircle2, Trophy, BookOpen, Umbrella, 
 import { AqiIcon, getAqiTextColor } from "./AqiIcon";
 import { Camera, Loader2, Share2, Copy, Check, ImagePlus, RefreshCw, Navigation, MapPinCheck, Leaf } from "lucide-react";
 import RouteMap from "./RouteMap";
+import TripGuide from "./TripGuide";
 import { type ComponentType } from "react";
 import { type LucideProps } from "lucide-react";
 
@@ -45,7 +46,7 @@ export default function TripResult({ trip, missions, onCompleteMission, onSave, 
   return (
     <div className="space-y-4 pb-6">
       {/* Stamp Collection Bar */}
-      <div className="app-card p-4 animate-fade-in-up">
+      <div id="trip-stamps-bar" className="app-card p-4 animate-fade-in-up">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-semibold">{isEn ? "Stamps" : "แสตมป์สะสม"}</span>
           <span className="text-[12px] font-bold" style={{ color: "var(--color-primary)" }}>{completedCount}/{totalCount}</span>
@@ -79,7 +80,7 @@ export default function TripResult({ trip, missions, onCompleteMission, onSave, 
       </div>
 
       {/* Hero Card */}
-      <div className="app-card overflow-hidden animate-fade-in-up delay-1">
+      <div id="trip-hero-card" className="app-card overflow-hidden animate-fade-in-up delay-1">
         <div className="p-5 pb-4">
           <h2 className="text-xl font-bold leading-tight mb-1">{trip.trip_title}</h2>
           <p className="text-sm leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>{trip.short_description}</p>
@@ -92,7 +93,7 @@ export default function TripResult({ trip, missions, onCompleteMission, onSave, 
       </div>
 
       {/* Progress */}
-      <div className="app-card p-4 animate-fade-in-up delay-2">
+      <div id="trip-progress" className="app-card p-4 animate-fade-in-up delay-2">
         <div className="flex items-center justify-between mb-2.5">
           <span className="text-sm font-semibold">{t.progress}</span>
           <span className="text-sm font-bold" style={{ color: allCompleted ? "var(--color-success)" : "var(--color-primary)" }}>{completedCount}/{totalCount}</span>
@@ -108,18 +109,19 @@ export default function TripResult({ trip, missions, onCompleteMission, onSave, 
       {/* Route Timeline */}
       <div className="space-y-3">
         {trip.route_items?.map((item, index) => (
-          <MissionCard
-            key={index}
-            item={item}
-            index={index}
-            prevItem={index > 0 ? trip.route_items[index - 1] : undefined}
-            mission={missions[index]}
-            missions={missions}
-            onComplete={onCompleteMission}
-            t={t}
-            isEn={isEn}
-            transport={transport}
-          />
+          <div key={index} id={`trip-mission-${index}`}>
+            <MissionCard
+              item={item}
+              index={index}
+              prevItem={index > 0 ? trip.route_items[index - 1] : undefined}
+              mission={missions[index]}
+              missions={missions}
+              onComplete={onCompleteMission}
+              t={t}
+              isEn={isEn}
+              transport={transport}
+            />
+          </div>
         ))}
       </div>
 
@@ -151,6 +153,9 @@ export default function TripResult({ trip, missions, onCompleteMission, onSave, 
         )}
         <InviteButton trip={trip} isEn={isEn} />
       </div>
+
+      {/* Trip Guide */}
+      <TripGuide />
     </div>
   );
 }
@@ -385,7 +390,7 @@ function MissionCard({
 
         {/* Action buttons */}
         {!isCompleted && (
-          <div className="mt-3 space-y-2">
+          <div id={`trip-mission-actions-${index}`} className="mt-3 space-y-2">
             <div className="grid grid-cols-3 gap-2">
               {/* Camera */}
               <button onClick={() => cameraRef.current?.click()} disabled={verifying}
@@ -479,6 +484,7 @@ function InviteButton({ trip, isEn }: { trip: TripResultType; isEn: boolean }) {
   return (
     <>
       <button
+        id="trip-invite-btn"
         onClick={() => { setShowSheet(true); setSheetMode("choose"); }}
         className="pill-btn w-full gap-2"
         style={{ background: "white", color: "var(--color-text-secondary)", border: "1px solid var(--color-border)", padding: "14px 20px" }}
