@@ -40,22 +40,22 @@ const steps: GuideStep[] = [
     targetId: "trip-route-map",
     titleTh: "แผนที่เส้นทาง",
     titleEn: "Route Map",
-    descTh: "แสดงภาพรวมเส้นทางทั้งหมด จุด A B C D กดที่แผนที่หรือปุ่ม 'นำทางทั้งหมด' เพื่อเปิด Google Maps นำทางไปทุกจุดได้เลย",
-    descEn: "Overview of your route with points A B C D. Tap the map or 'Navigate All' to open Google Maps with all waypoints",
+    descTh: "ภาพรวมเส้นทาง A B C D กดเพื่อเปิด Google Maps นำทางทุกจุด",
+    descEn: "Route overview A B C D. Tap to open Google Maps navigation",
   },
   {
     targetId: "trip-mission-0",
     titleTh: "การ์ดภารกิจ",
     titleEn: "Mission Card",
-    descTh: "แต่ละการ์ดมี: รูปสถานที่จริง, อุณหภูมิ ณ จุดนั้น, ค่า AQI (คุณภาพอากาศ), คำเตือนฝนตก/ใส่หน้ากาก, Carbon Credit ที่ลดได้, และปุ่มนำทางไป Google Maps",
-    descEn: "Each card shows: real place photo, temperature, AQI (air quality), rain/mask warnings, Carbon Credit saved, and a button to navigate via Google Maps",
+    descTh: "รูปสถานที่จริง อุณหภูมิ AQI เตือนฝน/หน้ากาก Carbon Credit และปุ่มนำทาง",
+    descEn: "Real photo, temperature, AQI, rain/mask alerts, Carbon Credit, and navigation",
   },
   {
     targetId: "trip-mission-actions-0",
     titleTh: "ยืนยันภารกิจ",
     titleEn: "Complete Mission",
-    descTh: "3 วิธียืนยัน: 📷 ถ่ายรูป (เปิดกล้อง) | 🖼 เลือกรูป (จากแกลเลอรี่) | 📍 เช็คอิน (ใช้ GPS ตรวจว่าอยู่ใกล้สถานที่) — AI จะตรวจว่ารูป/ตำแหน่งตรงกับภารกิจ",
-    descEn: "3 ways to verify: 📷 Camera (take photo) | 🖼 Gallery (pick photo) | 📍 Check-in (GPS verifies you're nearby) — AI checks if photo/location matches the mission",
+    descTh: "📷 ถ่ายรูป | 🖼 เลือกรูป | 📍 เช็คอิน GPS — AI ตรวจให้อัตโนมัติ",
+    descEn: "📷 Camera | 🖼 Gallery | 📍 GPS Check-in — AI verifies automatically",
   },
   {
     targetId: "save-trip-btn",
@@ -68,8 +68,8 @@ const steps: GuideStep[] = [
     targetId: "trip-invite-btn",
     titleTh: "ชวนเพื่อนมาเล่น",
     titleEn: "Invite Friends",
-    descTh: "แชร์ทริปนี้ให้เพื่อนผ่าน LINE, Messenger หรือหาเพื่อนใกล้เคียงที่ใช้แอปเดียวกัน",
-    descEn: "Share this trip with friends via LINE, Messenger, or find nearby users on the same app",
+    descTh: "แชร์ทริปให้เพื่อนผ่าน LINE, Messenger หรือหาเพื่อนใกล้เคียง",
+    descEn: "Share trip via LINE, Messenger or find nearby friends",
   },
 ];
 
@@ -133,20 +133,24 @@ export default function TripGuide() {
   const s = steps[current];
   const isLast = current === steps.length - 1;
 
-  const tooltipStyle: React.CSSProperties = { zIndex: 81, pointerEvents: "auto", maxWidth: 300 };
+  const tooltipStyle: React.CSSProperties = { zIndex: 81, pointerEvents: "auto", maxWidth: 280, left: 16, right: 16 };
   if (rect) {
     const spaceBelow = window.innerHeight - rect.bottom;
-    if (spaceBelow > 140) {
-      tooltipStyle.top = rect.bottom + 12;
-      tooltipStyle.left = Math.max(12, Math.min(rect.left, window.innerWidth - 316));
+    const spaceAbove = rect.top;
+    if (spaceBelow > 160) {
+      // Show below target
+      tooltipStyle.top = Math.min(rect.bottom + 12, window.innerHeight - 180);
+    } else if (spaceAbove > 160) {
+      // Show above target
+      tooltipStyle.bottom = Math.max(window.innerHeight - rect.top + 12, 20);
     } else {
-      tooltipStyle.bottom = window.innerHeight - rect.top + 12;
-      tooltipStyle.left = Math.max(12, Math.min(rect.left, window.innerWidth - 316));
+      // Not enough space — show in center of screen
+      tooltipStyle.top = "50%";
+      tooltipStyle.transform = "translateY(-50%)";
     }
   } else {
-    tooltipStyle.top = "35%";
-    tooltipStyle.left = 16;
-    tooltipStyle.right = 16;
+    tooltipStyle.top = "40%";
+    tooltipStyle.transform = "translateY(-50%)";
   }
 
   return (
